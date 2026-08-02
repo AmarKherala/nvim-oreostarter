@@ -7,6 +7,9 @@ on:
         description: "MediaFire download URL"
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   download:
     runs-on: ubuntu-latest
@@ -22,27 +25,12 @@ jobs:
       - name: Download file
         run: |
           mkdir -p downloads
-          cd downloads
-          wget "${{ github.event.inputs.mediafire_url }}"
+          wget -O downloads/app.ipa "${{ github.event.inputs.mediafire_url }}"
 
-      - name: Sanitize filenames
-        run: |
-          find downloads -depth | while read -r file; do
-            dir=$(dirname "$file")
-            base=$(basename "$file")
-            clean=$(echo "$base" | sed 's/[?*:|"<>]/_/g')
-            if [ "$base" != "$clean" ]; then
-              mv "$file" "$dir/$clean"
-            fi
-          done
-
-      - name: List downloaded files
-        run: |
-          ls -lah downloads
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Create Release and Upload IPA
+        uses: softprops/action-gh-release@v2
         with:
-          name: downloaded-file
-          path: downloads/
-
+          tag_name: build-${{ github.run_number }}
+          name: Build ${{ github.run_number }}
+          files: downloads/app.ipa
+          generate_release_notes: true
