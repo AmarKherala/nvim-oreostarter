@@ -1,0 +1,32 @@
+name: Download from MediaFire
+
+on:
+  workflow_dispatch:
+    inputs:
+      mediafire_url:
+        description: "MediaFire download URL"
+        required: true
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install wget
+        run: sudo apt-get update && sudo apt-get install -y wget
+
+      - name: Download file
+        run: |
+          mkdir downloads
+          wget --content-disposition -P downloads "${{ github.event.inputs.mediafire_url }}"
+
+      - name: List downloaded files
+        run: ls -lah downloads
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: downloaded-file
+          path: downloads/*
