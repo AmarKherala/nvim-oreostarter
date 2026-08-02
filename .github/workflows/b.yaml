@@ -15,18 +15,34 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install wget
-        run: sudo apt-get update && sudo apt-get install -y wget
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
 
       - name: Download file
         run: |
-          mkdir downloads
-          wget --content-disposition -P downloads "${{ github.event.inputs.mediafire_url }}"
+          mkdir -p downloads
+          cd downloads
+          wget "${{ github.event.inputs.mediafire_url }}"
+
+      - name: Sanitize filenames
+        run: |
+          find downloads -depth | while read -r file; do
+            dir=$(dirname "$file")
+            base=$(basename "$file")
+            clean=$(echo "$base" | sed 's/[?*:|"<>]/_/g')
+            if [ "$base" != "$clean" ]; then
+              mv "$file" "$dir/$clean"
+            fi
+          done
 
       - name: List downloaded files
-        run: ls -lah downloads
+        run: |
+          ls -lah downloads
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-file
-          path: downloads/*
+          path: downloads/
+
